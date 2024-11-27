@@ -1,5 +1,6 @@
 #include "mem.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 
 //== struct algorithms ====================
@@ -13,7 +14,11 @@ int checkHeapFreeSpace(heap* h) {
 }
 
 int checkHeapOccupiedSpace(heap* h) {
-    return HEAP_SIZE - checkHeapFreeSpace(h);
+    int size = 0; 
+    for(int ix = 0; ix < HEAP_SIZE; ix++)
+        if(h->total_space->occupied == TRUE)
+            size++;
+    return size; 
 }
 
 //== heap algorithms ======================
@@ -65,16 +70,43 @@ void* allocate(size_t size, heap* manager) {
 
     // variables
     void* ptr; 
+    int counter = 0;
+    int index;
 
     // testing purposes
-    ptr = malloc(sizeof(char) * size);
+    // ptr = malloc(sizeof(char) * size);
 
-    
+    // search for free block in the heap 
+    for(index = 0; index < HEAP_SIZE; index++) {
+        if(manager->total_space[index].occupied == FALSE) {
+            counter++; 
+            if(counter == size) 
+                break;
+        }
+        else 
+            counter = 0;
+    }
+
+    // if found, save the address into the variable
+    if(counter < size) {
+        printf("no block big enough to satisfy request\n");
+        printf("counter: %d\n", counter);
+        printf("size: %zu\n", size);
+        return NULL;
+    } else if(counter == size) {
+        printf("space found\n");
+        ptr = (void*)&manager->total_space[index];
+        printf("filling blocks from %d to %zu\n", index, size);
+        for(int ix = index; ix < size; ix++) 
+            manager->total_space[index].occupied = TRUE;
+    } else {
+        printf("error\n");
+        return NULL;
+    }
+
     // update heap details
     manager->used_space += size;
     manager->free_space -= size; 
-
-    
 
     return ptr;
 }
